@@ -1,176 +1,212 @@
-  const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
+const JWT_SECRET = process.env.JWT_SECRET || 'medisort_super_secret_jwt_key_2026';
 
-// Increase payload limit to allow camera snapshots (base64 images)
+// SET YOUR MASTER EMAIL HERE (Only this email can access user directory)
+const MASTER_ADMIN_EMAIL = 'admin@medisort.com';
+
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Canonical Medical Waste Master Catalog (Strict BMW Rules Compliant)
-const BMW_CATALOG = {
-  "soiled_gauze": {
-    id: "soiled_gauze",
-    name: "Soiled Gauze & Cotton",
-    bin: "Yellow",
-    treatment: "Incineration / Deep Burial",
-    hazard: "Pathological / Blood Contamination",
-    icon: "fa-bandage",
-    refImage: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&auto=format&fit=crop&q=60"
+// In-Memory Storage
+const users = [
+  {
+    id: 'USR-MASTER-01',
+    name: 'Master Administrator',
+    email: MASTER_ADMIN_EMAIL,
+    passwordHash: bcrypt.hashSync('Admin@12345', 10),
+    role: 'ADMIN',
+    facility: 'Central Biohazard Command'
   },
-  "blood_bag": {
-    id: "blood_bag",
-    name: "Blood Bag & Fluid Bags",
-    bin: "Yellow",
-    treatment: "Incineration / Autoclaving",
-    hazard: "Infectious Body Fluids",
-    icon: "fa-tint",
-    refImage: "https://images.unsplash.com/photo-1615461066841-6116e61058f4?w=300&auto=format&fit=crop&q=60"
+  {
+    id: 'USR-STAFF-101',
+    name: 'Nurse Priya Sharma',
+    email: 'priya@hospital.org',
+    passwordHash: bcrypt.hashSync('Staff@12345', 10),
+    role: 'STAFF',
+    ward: 'ICU Complex - Bay 4'
   },
-  "iv_tubing": {
-    id: "iv_tubing",
-    name: "IV Line & Infusion Sets",
-    bin: "Red",
-    treatment: "Autoclaving followed by Shredding",
-    hazard: "Contaminated Non-Sharps Plastic",
-    icon: "fa-network-wired",
-    refImage: "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=300&auto=format&fit=crop&q=60"
-  },
-  "catheter": {
-    id: "catheter",
-    name: "Urine Bag & Catheters",
-    bin: "Red",
-    treatment: "Sterilization / Chemical Recycling",
-    hazard: "Polymer Fluid Contamination",
-    icon: "fa-vial",
-    refImage: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=300&auto=format&fit=crop&q=60"
-  },
-  "hypodermic_needle": {
-    id: "hypodermic_needle",
-    name: "Hypodermic Needle / Scalpel",
-    bin: "White",
-    treatment: "Dry Heat / Puncture-proof Encapsulation",
-    hazard: "Puncture & Sharps Injury Risk",
-    icon: "fa-syringe",
-    refImage: "https://images.unsplash.com/photo-1583912267670-6575ad472688?w=300&auto=format&fit=crop&q=60"
-  },
-  "glass_ampoule": {
-    id: "glass_ampoule",
-    name: "Glass Ampoule / Medicine Vial",
-    bin: "Blue",
-    treatment: "Disinfection & Glass Recycling",
-    hazard: "Breakage / Chemical Residue",
-    icon: "fa-prescription-bottle",
-    refImage: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&auto=format&fit=crop&q=60"
+  {
+    id: 'USR-REC-501',
+    name: 'Ramesh Kumar (CBWTF)',
+    email: 'ramesh@greenrecycler.in',
+    passwordHash: bcrypt.hashSync('Recycle@12345', 10),
+    role: 'RECYCLER',
+    licenseNumber: 'CBWTF-DL-2026-8801'
   }
-};
+];
 
-// System State
+// Catalog of Standardized Biomedical Items
+const BMW_CATALOG = [
+  { id: 'BMW-YEL', name: 'Soiled Dressings / Pathological', bin: 'Yellow', hazard: 'Biohazard Level 3', treatment: 'Incineration (1050°C)', defWt: 0.45, img: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&auto=format&fit=crop&q=80' },
+  { id: 'BMW-RED', name: 'Contaminated IV Tubes / Catheters', bin: 'Red', hazard: 'Infectious Polymers', treatment: 'Autoclave & Shredding', defWt: 0.35, img: 'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=300&auto=format&fit=crop&q=80' },
+  { id: 'BMW-WHT', name: 'Used Scalpel & Syringe Needles', bin: 'White', hazard: 'Puncture Risk', treatment: 'Encapsulation & Sterilization', defWt: 0.12, img: 'https://images.unsplash.com/photo-1583912267670-6575ad472688?w=300&auto=format&fit=crop&q=80' },
+  { id: 'BMW-BLU', name: 'Glass Medicine Vials / Ampoules', bin: 'Blue', hazard: 'Breakage / Chemical Residue', treatment: 'Sodium Hypochlorite Wash', defWt: 0.25, img: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&auto=format&fit=crop&q=80' }
+];
+
 let cartTelemetry = {
-  cartId: "MEDICART-01",
-  status: "OPERATIONAL",
-  currentWard: "Trauma Ward - 2A",
+  cartId: 'MEDISORT-01',
   battery: 92,
   bins: {
-    Yellow: { level: 25, currentKg: 3.75, maxKg: 15.0, count: 4 },
-    Red: { level: 40, currentKg: 6.0, maxKg: 15.0, count: 6 },
-    White: { level: 12, currentKg: 1.2, maxKg: 10.0, count: 2 },
-    Blue: { level: 18, currentKg: 2.16, maxKg: 12.0, count: 3 }
+    Yellow: { level: 30, currentKg: 4.5, maxKg: 15.0 },
+    Red: { level: 48, currentKg: 7.2, maxKg: 15.0 },
+    White: { level: 15, currentKg: 1.5, maxKg: 10.0 },
+    Blue: { level: 22, currentKg: 2.6, maxKg: 12.0 }
   }
 };
 
-let wasteLogs = [];
+let wasteTransfers = [];
 
-// --- APIs ---
+// --- AUTHENTICATION MIDDLEWARE ---
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Access token required.' });
 
-// 1. Fetch Waste Classification Catalog
-app.get('/api/catalog', (req, res) => {
-  res.json(Object.values(BMW_CATALOG));
-});
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ error: 'Session expired or token invalid.' });
+    req.user = decoded;
+    next();
+  });
+}
 
-// 2. Fetch Live Cart Telemetry
-app.get('/api/cart', (req, res) => {
-  res.json(cartTelemetry);
-});
+// --- AUTH APIS ---
 
-// 3. Process Medical Waste Deposit
-app.post('/api/deposit', (req, res) => {
-  const { catalogId, weight, ward, snapshot } = req.body;
+// Login
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required.' });
 
-  // Validation
-  const item = BMW_CATALOG[catalogId];
-  if (!item) {
-    return res.status(400).json({ error: "Invalid classification identifier." });
-  }
+  const cleanEmail = email.trim().toLowerCase();
+  const user = users.find(u => u.email.toLowerCase() === cleanEmail);
+  if (!user) return res.status(401).json({ error: 'Invalid email or password.' });
 
-  const numWeight = parseFloat(weight);
-  if (isNaN(numWeight) || numWeight <= 0 || numWeight > 10.0) {
-    return res.status(400).json({ error: "Invalid weight. Value must be between 0.01 kg and 10.0 kg." });
-  }
+  const valid = bcrypt.compareSync(password, user.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Invalid email or password.' });
 
-  const bin = cartTelemetry.bins[item.bin];
-  if (!bin) {
-    return res.status(500).json({ error: "Target bin not recognized." });
-  }
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role, name: user.name },
+    JWT_SECRET,
+    { expiresIn: '12h' }
+  );
 
-  // Prevent Overfilling
-  if (bin.currentKg + numWeight > bin.maxKg) {
-    return res.status(409).json({ 
-      error: `Bin capacity exceeded! ${item.bin} bin cannot accept ${numWeight} kg. Please empty the bin.` 
-    });
-  }
-
-  // Update Telemetry
-  bin.currentKg = +(bin.currentKg + numWeight).toFixed(2);
-  bin.level = Math.min(100, Math.round((bin.currentKg / bin.maxKg) * 100));
-  bin.count += 1;
-
-  // Record Audit Entry
-  const newLog = {
-    id: `MED-${Date.now().toString().slice(-6)}`,
-    catalogId: item.id,
-    itemName: item.name,
-    bin: item.bin,
-    weightKg: numWeight,
-    hazard: item.hazard,
-    ward: ward || cartTelemetry.currentWard,
-    hasImage: Boolean(snapshot),
-    snapshot: snapshot || item.refImage,
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    date: new Date().toISOString().split('T')[0]
-  };
-
-  wasteLogs.unshift(newLog);
-
-  res.status(201).json({
-    success: true,
-    message: `Waste recorded into ${item.bin} Bin successfully.`,
-    log: newLog,
-    telemetry: cartTelemetry
+  res.json({
+    token,
+    user: { id: user.id, name: user.name, email: user.email, role: user.role }
   });
 });
 
-// 4. Fetch Logs
-app.get('/api/logs', (req, res) => {
-  res.json(wasteLogs);
+// Master Admin: View All Registered Users (Guarded against data leak)
+app.get('/api/admin/users', authenticateToken, (req, res) => {
+  if (req.user.email !== MASTER_ADMIN_EMAIL && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Zero-Breach Policy: Only the Master Admin can access emails and credentials.' });
+  }
+  const safeUsers = users.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    ward: u.ward || u.facility || u.licenseNumber || 'N/A'
+  }));
+  res.json(safeUsers);
 });
 
-// 5. Emergency Bin Reset (Discharge Cycle)
-app.post('/api/bins/empty', (req, res) => {
-  const { binType } = req.body;
-  if (cartTelemetry.bins[binType]) {
-    cartTelemetry.bins[binType].currentKg = 0.0;
-    cartTelemetry.bins[binType].level = 0;
-    cartTelemetry.bins[binType].count = 0;
-    return res.json({ success: true, telemetry: cartTelemetry });
+// --- CORE MEDICAL SYSTEM APIS ---
+
+app.get('/api/catalog', (req, res) => res.json(BMW_CATALOG));
+app.get('/api/telemetry', (req, res) => res.json(cartTelemetry));
+
+// 1. Staff Logs Deposit & Generates Handshake Record
+app.post('/api/deposit/create', authenticateToken, (req, res) => {
+  if (req.user.role !== 'STAFF' && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only authorized ward staff can log waste.' });
   }
-  res.status(400).json({ error: "Invalid bin specified." });
+
+  const { catalogId, weight, ward, snapshot } = req.body;
+  const item = BMW_CATALOG.find(c => c.id === catalogId);
+  if (!item) return res.status(400).json({ error: 'Invalid catalog item.' });
+
+  const numWeight = parseFloat(weight);
+  if (isNaN(numWeight) || numWeight <= 0) {
+    return res.status(400).json({ error: 'Measured weight must be greater than zero.' });
+  }
+
+  const bin = cartTelemetry.bins[item.bin];
+  if (bin.currentKg + numWeight > bin.maxKg) {
+    return res.status(409).json({ error: `Overfill Alert: ${item.bin} bin will exceed safe limit!` });
+  }
+
+  bin.currentKg = +(bin.currentKg + numWeight).toFixed(2);
+  bin.level = Math.min(100, Math.round((bin.currentKg / bin.maxKg) * 100));
+
+  const transferId = `TRF-${Date.now().toString().slice(-6)}`;
+  const record = {
+    transferId,
+    timestamp: new Date().toLocaleTimeString(),
+    date: new Date().toISOString().split('T')[0],
+    item: item.name,
+    bin: item.bin,
+    weightKg: numWeight,
+    hazard: item.hazard,
+    ward: ward || 'ICU General',
+    depositedByStaff: req.user.name,
+    staffId: req.user.id,
+    status: 'PENDING_RECYCLER_PICKUP',
+    acceptedByRecycler: null,
+    recyclerLicense: null,
+    handoverTimestamp: null,
+    snapshot: snapshot || item.img
+  };
+
+  wasteTransfers.unshift(record);
+
+  res.status(201).json({
+    success: true,
+    transferId,
+    record,
+    cart: cartTelemetry
+  });
+});
+
+// 2. Recycler Scans QR & Authenticates Chain-of-Custody Handshake
+app.post('/api/handover/scan', authenticateToken, (req, res) => {
+  if (req.user.role !== 'RECYCLER' && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only certified CBWTF recyclers can accept handovers.' });
+  }
+
+  const { transferId, recyclerLicense } = req.body;
+  const transfer = wasteTransfers.find(t => t.transferId === transferId);
+
+  if (!transfer) {
+    return res.status(404).json({ error: 'Transfer manifest code not found.' });
+  }
+
+  if (transfer.status === 'COLLECTED_BY_RECYCLER') {
+    return res.status(400).json({ error: 'This batch has already been collected and authenticated.' });
+  }
+
+  transfer.status = 'COLLECTED_BY_RECYCLER';
+  transfer.acceptedByRecycler = req.user.name;
+  transfer.recyclerLicense = recyclerLicense || 'CBWTF-DL-2026-8801';
+  transfer.handoverTimestamp = new Date().toLocaleTimeString();
+
+  res.json({
+    success: true,
+    message: `Chain of Custody Verified: ${transfer.weightKg} kg transferred to ${req.user.name}.`,
+    transfer
+  });
+});
+
+// 3. View All Manifests
+app.get('/api/manifests', authenticateToken, (req, res) => {
+  res.json(wasteTransfers);
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`MEDISORT Server running at port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`MEDISORT Secure Hub running on port ${PORT}`));
