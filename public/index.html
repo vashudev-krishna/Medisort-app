@@ -1,242 +1,474 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MEDISORT - Smart Mobile Medical Waste System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MEDISORT - Mobile Medical-Waste Segregation</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    /* Custom scroller for small screen dashboards */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
 
-  <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-50 backdrop-blur px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="bg-emerald-500 text-slate-950 p-2.5 rounded-xl font-black text-xl flex items-center justify-center">
-        <i class="fa-solid fa-recycle"></i>
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-4 py-3 sm:px-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-lg shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-hand-holding-medical"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg sm:text-xl tracking-wide bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">MEDISORT</h1>
+          <p class="text-[10px] sm:text-xs text-slate-400 font-mono hidden xs:block">SIH26115 • Smart Segregation Hub</p>
+        </div>
       </div>
-      <div>
-        <h1 class="font-black text-2xl tracking-wide bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">MEDISORT</h1>
-        <p class="text-xs text-slate-400">SIH26115 • Smart Mobile Medical-Waste Segregation</p>
+
+      <div class="flex items-center gap-2 sm:gap-3 text-xs font-mono">
+        <div class="bg-slate-800/90 border border-slate-700 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-300 hidden sm:inline">MEDICART-01</span>
+        </div>
+        <div class="bg-slate-800/90 border border-slate-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 text-emerald-400">
+          <i class="fa-solid fa-bolt text-xs"></i> 92%
+        </div>
       </div>
-    </div>
-    <div class="flex items-center gap-4 text-xs font-mono">
-      <span class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span> Cart MEDICART-01 Online
-      </span>
-      <span class="bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-        <i class="fa-solid fa-battery-three-quarters text-emerald-400"></i> 84%
-      </span>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <section class="lg:col-span-2 space-y-6">
-      <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl backdrop-blur">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold flex items-center gap-2 text-white">
-            <i class="fa-solid fa-microchip text-emerald-400"></i> AI Auto-Segregation Assistant
-          </h2>
-          <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">BMW Rules 2016 Compliant</span>
+  <!-- Container -->
+  <main class="max-w-7xl mx-auto w-full p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1">
+
+    <!-- Primary Control Column (Inputs, Camera & Sensors) -->
+    <div class="lg:col-span-7 space-y-5">
+      
+      <!-- Input Card -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2 font-bold text-sm sm:text-base text-white">
+            <i class="fa-solid fa-qrcode text-emerald-400"></i>
+            <span>Classified Medical Item Deposit</span>
+          </div>
+          <span class="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">BMW 2016 Compliant</span>
         </div>
 
-        <p class="text-sm text-slate-300 mb-4">Type the waste item to get designated color bin & handling instructions.</p>
-
-        <div class="flex gap-2">
-          <input id="itemInput" type="text" placeholder="e.g., Used Syringes, Cotton gauze with blood, IV tubing, Glass vial..." 
-                 class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-400 text-white placeholder-slate-500" />
-          <button onclick="classifyItem()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 rounded-xl transition flex items-center gap-2 text-sm">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Classify
-          </button>
+        <!-- Strict Item Selection -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select Approved Waste Category</label>
+          <select id="catalogSelector" onchange="onItemSelected()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 font-medium">
+            <option value="" disabled selected>-- Select an authorized item from catalog --</option>
+          </select>
         </div>
 
-        <div id="aiResult" class="hidden mt-5 p-4 rounded-xl border border-slate-700 bg-slate-950/60 transition">
-          <div class="flex items-start justify-between">
-            <div>
-              <span class="text-xs uppercase text-slate-400 tracking-wider">Detected Item</span>
-              <h3 id="resultItem" class="font-bold text-lg text-white">Needle</h3>
-              <p id="resultNote" class="text-xs text-slate-300 mt-1 font-mono"></p>
+        <!-- Live Visual Verification Card -->
+        <div id="catalogPreview" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 flex gap-3 items-center">
+          <img id="catalogImg" src="" alt="Reference Image" class="h-16 w-16 sm:h-20 sm:w-20 rounded-lg object-cover border border-slate-700" />
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h4 id="catalogTitle" class="font-bold text-sm text-white truncate">Item Name</h4>
+              <span id="catalogBinPill" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded">YELLOW</span>
             </div>
-            <div id="binBadge" class="px-4 py-2 rounded-xl font-black text-sm uppercase tracking-wider text-slate-950 flex items-center gap-2">
-              <span>White Bin</span>
+            <p id="catalogHazard" class="text-xs text-rose-400 mt-0.5 font-medium"></p>
+            <p id="catalogProtocol" class="text-[11px] text-slate-400 mt-1 font-mono leading-tight"></p>
+          </div>
+        </div>
+
+        <!-- Camera Interface (WebRTC) -->
+        <div class="border border-slate-800 rounded-xl p-3 bg-slate-950">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-camera text-slate-400"></i> Optical Verification Camera
+            </span>
+            <button type="button" id="cameraToggleBtn" onclick="toggleCamera()" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
+              <i class="fa-solid fa-video"></i> Start Camera
+            </button>
+          </div>
+
+          <div class="relative bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center min-h-[160px] sm:min-h-[200px] border border-slate-800">
+            <video id="videoElement" autoplay playsinline class="hidden w-full h-48 sm:h-56 object-cover"></video>
+            <canvas id="canvasElement" class="hidden"></canvas>
+            <img id="capturedSnapshot" class="hidden w-full h-48 sm:h-56 object-cover" />
+            
+            <div id="cameraPlaceholder" class="text-center text-slate-500 p-4">
+              <i class="fa-solid fa-camera-rotate text-2xl mb-1"></i>
+              <p class="text-xs">Camera is offline. Click 'Start Camera' to capture waste proof.</p>
             </div>
           </div>
-          <button onclick="logCurrentDetected()" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-2 rounded-lg text-xs font-semibold">
-            Confirm & Log Deposit into Bin
-          </button>
+
+          <div id="cameraControls" class="hidden mt-2 flex gap-2 justify-end">
+            <button type="button" onclick="captureSnapshot()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-dot"></i> Capture Snapshot
+            </button>
+            <button type="button" onclick="retakeSnapshot()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs">
+              Retake
+            </button>
+          </div>
+        </div>
+
+        <!-- Weight & Ward Inputs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Load Cell Weight (Kg)</label>
+            <div class="relative">
+              <input type="number" id="weightInput" step="0.01" min="0.01" max="10.0" placeholder="0.00" 
+                     class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 pl-8" />
+              <i class="fa-solid fa-scale-balanced absolute left-3 top-3 text-slate-500 text-xs"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Ward Location</label>
+            <input type="text" id="wardInput" value="Trauma Ward - 2A" 
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono" />
+          </div>
+        </div>
+
+        <!-- Submit Deposit Button -->
+        <button onclick="submitDeposit()" id="submitBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl transition duration-150 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 text-sm">
+          <i class="fa-solid fa-lock"></i> Validate & Deposit in Secure Bin
+        </button>
+
+        <div id="statusAlert" class="hidden p-3 rounded-xl text-xs font-medium border"></div>
+      </div>
+    </div>
+
+    <!-- Telemetry & Live Manifest Column -->
+    <div class="lg:col-span-5 space-y-5">
+
+      <!-- Live Mobile Cart Status Cards -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+        <h3 class="font-bold text-sm sm:text-base text-white flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-truck-medical text-cyan-400"></i> Smart Bin Status
+          </span>
+          <span class="text-[10px] font-mono text-slate-400">ULTRASONIC IOT</span>
+        </h3>
+
+        <div class="grid grid-cols-2 gap-3" id="binCardsContainer">
+          <!-- Yellow Bin -->
+          <div class="bg-slate-950 border-l-4 border-yellow-400 p-3 rounded-xl">
+            <div class="flex justify-between items-center text-xs font-bold text-yellow-400">
+              <span>YELLOW</span>
+              <span id="pct-Yellow">0%</span>
+            </div>
+            <p class="text-[10px] text-slate-400 truncate">Infectious Waste</p>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div id="bar-Yellow" class="bg-yellow-400 h-full w-0 transition-all duration-300"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
+              <span id="wt-Yellow">0.0 / 15 kg</span>
+              <button onclick="emptyBin('Yellow')" class="text-rose-400 hover:text-rose-300">Empty</button>
+            </div>
+          </div>
+
+          <!-- Red Bin -->
+          <div class="bg-slate-950 border-l-4 border-rose-500 p-3 rounded-xl">
+            <div class="flex justify-between items-center text-xs font-bold text-rose-400">
+              <span>RED</span>
+              <span id="pct-Red">0%</span>
+            </div>
+            <p class="text-[10px] text-slate-400 truncate">Plastics & Tubing</p>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div id="bar-Red" class="bg-rose-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
+              <span id="wt-Red">0.0 / 15 kg</span>
+              <button onclick="emptyBin('Red')" class="text-rose-400 hover:text-rose-300">Empty</button>
+            </div>
+          </div>
+
+          <!-- White Bin -->
+          <div class="bg-slate-950 border-l-4 border-slate-200 p-3 rounded-xl">
+            <div class="flex justify-between items-center text-xs font-bold text-slate-200">
+              <span>WHITE</span>
+              <span id="pct-White">0%</span>
+            </div>
+            <p class="text-[10px] text-slate-400 truncate">Needles / Sharps</p>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div id="bar-White" class="bg-slate-200 h-full w-0 transition-all duration-300"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
+              <span id="wt-White">0.0 / 10 kg</span>
+              <button onclick="emptyBin('White')" class="text-rose-400 hover:text-rose-300">Empty</button>
+            </div>
+          </div>
+
+          <!-- Blue Bin -->
+          <div class="bg-slate-950 border-l-4 border-blue-500 p-3 rounded-xl">
+            <div class="flex justify-between items-center text-xs font-bold text-blue-400">
+              <span>BLUE</span>
+              <span id="pct-Blue">0%</span>
+            </div>
+            <p class="text-[10px] text-slate-400 truncate">Glass & Vials</p>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div id="bar-Blue" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
+              <span id="wt-Blue">0.0 / 12 kg</span>
+              <button onclick="emptyBin('Blue')" class="text-rose-400 hover:text-rose-300">Empty</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
-        <h2 class="text-lg font-bold flex items-center gap-2 text-white mb-4">
-          <i class="fa-solid fa-weight-scale text-cyan-400"></i> Mobile Cart Bins (Ultrasonic Level Status)
-        </h2>
+      <!-- Real-Time Audit Manifest (With Image Proof) -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col min-h-[350px]">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-emerald-400"></i> Verified Waste Manifest
+          </h3>
+          <span class="text-[10px] font-mono bg-slate-800 px-2 py-0.5 rounded text-slate-400">Secure Logs</span>
+        </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div class="bg-slate-900/90 border-t-4 border-yellow-400 p-4 rounded-xl">
-            <span class="text-xs font-bold text-yellow-400 uppercase">Yellow Bin</span>
-            <p class="text-[11px] text-slate-400">Infectious / Soiled</p>
-            <div class="mt-3">
-              <span id="lvl-yellow-text" class="text-xl font-bold">45%</span>
-              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
-                <div id="lvl-yellow-bar" class="bg-yellow-400 h-full" style="width: 45%"></div>
-              </div>
-              <p id="wt-yellow" class="text-[10px] text-slate-400 mt-1">6.8 / 15 kg</p>
-            </div>
-          </div>
-
-          <div class="bg-slate-900/90 border-t-4 border-rose-500 p-4 rounded-xl">
-            <span class="text-xs font-bold text-rose-500 uppercase">Red Bin</span>
-            <p class="text-[11px] text-slate-400">Plastics / Tubing</p>
-            <div class="mt-3">
-              <span id="lvl-red-text" class="text-xl font-bold">68%</span>
-              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
-                <div id="lvl-red-bar" class="bg-rose-500 h-full" style="width: 68%"></div>
-              </div>
-              <p id="wt-red" class="text-[10px] text-slate-400 mt-1">10.2 / 15 kg</p>
-            </div>
-          </div>
-
-          <div class="bg-slate-900/90 border-t-4 border-slate-200 p-4 rounded-xl">
-            <span class="text-xs font-bold text-slate-200 uppercase">White Bin</span>
-            <p class="text-[11px] text-slate-400">Sharps / Needles</p>
-            <div class="mt-3">
-              <span id="lvl-white-text" class="text-xl font-bold">25%</span>
-              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
-                <div id="lvl-white-bar" class="bg-slate-200 h-full" style="width: 25%"></div>
-              </div>
-              <p id="wt-white" class="text-[10px] text-slate-400 mt-1">2.5 / 10 kg</p>
-            </div>
-          </div>
-
-          <div class="bg-slate-900/90 border-t-4 border-blue-500 p-4 rounded-xl">
-            <span class="text-xs font-bold text-blue-400 uppercase">Blue Bin</span>
-            <p class="text-[11px] text-slate-400">Glass / Ampoules</p>
-            <div class="mt-3">
-              <span id="lvl-blue-text" class="text-xl font-bold">30%</span>
-              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
-                <div id="lvl-blue-bar" class="bg-blue-500 h-full" style="width: 30%"></div>
-              </div>
-              <p id="wt-blue" class="text-[10px] text-slate-400 mt-1">3.6 / 12 kg</p>
-            </div>
-          </div>
+        <div id="logsList" class="space-y-2.5 overflow-y-auto max-h-[380px] pr-1 flex-1">
+          <!-- Logs will populate here -->
         </div>
       </div>
-    </section>
-
-    <section class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl flex flex-col">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-bold flex items-center gap-2 text-white">
-          <i class="fa-solid fa-list-check text-emerald-400"></i> Collection Logs
-        </h2>
-        <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Live Manifest</span>
-      </div>
-
-      <div id="logContainer" class="space-y-3 flex-1 overflow-y-auto max-h-[500px] pr-1"></div>
-    </section>
+    </div>
   </main>
 
   <script>
-    let lastClassification = null;
+    let catalog = [];
+    let mediaStream = null;
+    let currentSnapshotBase64 = null;
 
-    async function loadTelemetry() {
+    // 1. Initialize App Data
+    async function init() {
+      await fetchCatalog();
+      await fetchTelemetry();
+      await fetchLogs();
+      setInterval(fetchTelemetry, 6000);
+    }
+
+    // 2. Fetch Strictly Defined BMW Catalog
+    async function fetchCatalog() {
       try {
-        const res = await fetch('/api/cart');
-        const data = await res.json();
-        for (const [key, bin] of Object.entries(data.bins)) {
-          const bar = document.getElementById(`lvl-${key}-bar`);
-          const text = document.getElementById(`lvl-${key}-text`);
-          const wt = document.getElementById(`wt-${key}`);
-          if (bar && text && wt) {
-            bar.style.width = `${bin.level}%`;
-            text.innerText = `${bin.level}%`;
-            wt.innerText = `${bin.currentKg} / ${bin.maxKg} kg`;
-          }
-        }
+        const res = await fetch('/api/catalog');
+        catalog = await res.json();
+        const selector = document.getElementById('catalogSelector');
+        selector.innerHTML = '<option value="" disabled selected>-- Select an authorized item from catalog --</option>';
+        catalog.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.id;
+          opt.textContent = `[${item.bin.toUpperCase()}] ${item.name}`;
+          selector.appendChild(opt);
+        });
       } catch (err) {
-        console.error("Telemetry error:", err);
+        showAlert("Failed to load official catalog.", "danger");
       }
     }
 
-    async function loadLogs() {
+    // 3. User Selects an Item from Catalog
+    function onItemSelected() {
+      const id = document.getElementById('catalogSelector').value;
+      const item = catalog.find(x => x.id === id);
+      if (!item) return;
+
+      document.getElementById('catalogPreview').classList.remove('hidden');
+      document.getElementById('catalogImg').src = item.refImage;
+      document.getElementById('catalogTitle').textContent = item.name;
+      document.getElementById('catalogHazard').textContent = `Hazard: ${item.hazard}`;
+      document.getElementById('catalogProtocol').textContent = `Action: ${item.treatment}`;
+
+      const pill = document.getElementById('catalogBinPill');
+      pill.textContent = `${item.bin} BIN`;
+      pill.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ";
+
+      if (item.bin === 'Yellow') pill.classList.add('bg-yellow-400', 'text-slate-950');
+      else if (item.bin === 'Red') pill.classList.add('bg-rose-500', 'text-white');
+      else if (item.bin === 'White') pill.classList.add('bg-slate-200', 'text-slate-950');
+      else if (item.bin === 'Blue') pill.classList.add('bg-blue-500', 'text-white');
+    }
+
+    // 4. Camera Controls (WebRTC)
+    async function toggleCamera() {
+      const video = document.getElementById('videoElement');
+      const placeholder = document.getElementById('cameraPlaceholder');
+      const controls = document.getElementById('cameraControls');
+      const toggleBtn = document.getElementById('cameraToggleBtn');
+
+      if (mediaStream) {
+        // Stop camera
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+        video.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        controls.classList.add('hidden');
+        toggleBtn.innerHTML = '<i class="fa-solid fa-video"></i> Start Camera';
+      } else {
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+          });
+          video.srcObject = mediaStream;
+          video.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+          controls.classList.remove('hidden');
+          document.getElementById('capturedSnapshot').classList.add('hidden');
+          toggleBtn.innerHTML = '<i class="fa-solid fa-video-slash"></i> Stop Camera';
+        } catch (err) {
+          showAlert("Camera access denied or device has no camera.", "danger");
+        }
+      }
+    }
+
+    function captureSnapshot() {
+      const video = document.getElementById('videoElement');
+      const canvas = document.getElementById('canvasElement');
+      const capturedImg = document.getElementById('capturedSnapshot');
+
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      currentSnapshotBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      capturedImg.src = currentSnapshotBase64;
+      capturedImg.classList.remove('hidden');
+      video.classList.add('hidden');
+    }
+
+    function retakeSnapshot() {
+      currentSnapshotBase64 = null;
+      document.getElementById('capturedSnapshot').classList.add('hidden');
+      document.getElementById('videoElement').classList.remove('hidden');
+    }
+
+    // 5. Submit Deposit Transaction
+    async function submitDeposit() {
+      const catalogId = document.getElementById('catalogSelector').value;
+      const weight = parseFloat(document.getElementById('weightInput').value);
+      const ward = document.getElementById('wardInput').value.trim();
+
+      if (!catalogId) {
+        return showAlert("Please select a standard item from the catalog.", "warning");
+      }
+      if (isNaN(weight) || weight <= 0) {
+        return showAlert("Please specify a valid, measured weight (> 0 kg).", "warning");
+      }
+
+      try {
+        const payload = {
+          catalogId,
+          weight,
+          ward,
+          snapshot: currentSnapshotBase64
+        };
+
+        const res = await fetch('/api/deposit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          return showAlert(data.error || "Failed to log deposit.", "danger");
+        }
+
+        showAlert(data.message, "success");
+        
+        // Reset Inputs
+        document.getElementById('weightInput').value = '';
+        if (currentSnapshotBase64) retakeSnapshot();
+        
+        // Refresh UI
+        fetchTelemetry();
+        fetchLogs();
+      } catch (err) {
+        showAlert("Network communication error.", "danger");
+      }
+    }
+
+    // 6. Fetch Telemetry
+    async function fetchTelemetry() {
+      try {
+        const res = await fetch('/api/cart');
+        const cart = await res.json();
+
+        for (const [key, b] of Object.entries(cart.bins)) {
+          const bar = document.getElementById(`bar-${key}`);
+          const pct = document.getElementById(`pct-${key}`);
+          const wt = document.getElementById(`wt-${key}`);
+
+          if (bar) bar.style.width = `${b.level}%`;
+          if (pct) pct.textContent = `${b.level}%`;
+          if (wt) wt.textContent = `${b.currentKg.toFixed(1)} / ${b.maxKg} kg`;
+        }
+      } catch (err) {
+        console.error("Telemetry fetch fail", err);
+      }
+    }
+
+    // 7. Fetch Logs
+    async function fetchLogs() {
       try {
         const res = await fetch('/api/logs');
         const logs = await res.json();
-        const container = document.getElementById('logContainer');
+        const container = document.getElementById('logsList');
+
+        if (logs.length === 0) {
+          container.innerHTML = '<div class="text-xs text-slate-500 text-center py-8 font-mono">No deposits registered during this cycle.</div>';
+          return;
+        }
+
         container.innerHTML = logs.map(l => {
-          let badgeColor = 'bg-yellow-400 text-slate-950';
-          if (l.binType === 'Red') badgeColor = 'bg-rose-500 text-white';
-          if (l.binType === 'White') badgeColor = 'bg-slate-200 text-slate-950';
-          if (l.binType === 'Blue') badgeColor = 'bg-blue-500 text-white';
+          let badge = 'bg-yellow-400 text-slate-950';
+          if (l.bin === 'Red') badge = 'bg-rose-500 text-white';
+          if (l.bin === 'White') badge = 'bg-slate-200 text-slate-950';
+          if (l.bin === 'Blue') badge = 'bg-blue-500 text-white';
 
           return `
-            <div class="p-3 bg-slate-950/70 border border-slate-700/60 rounded-xl flex items-center justify-between text-xs">
-              <div>
-                <p class="font-bold text-white text-sm">${l.item}</p>
-                <p class="text-slate-400">${l.ward} • ${l.weight} kg</p>
-              </div>
-              <div class="text-right">
-                <span class="font-bold px-2 py-0.5 rounded text-[11px] ${badgeColor}">${l.binType}</span>
-                <p class="text-[10px] text-slate-500 mt-1 font-mono">${l.timestamp}</p>
+            <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-xl flex items-center gap-3">
+              <img src="${l.snapshot}" class="h-12 w-12 rounded-lg object-cover border border-slate-800 bg-slate-900 flex-shrink-0" />
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-start">
+                  <p class="text-xs font-bold text-white truncate">${l.itemName}</p>
+                  <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${badge}">${l.bin}</span>
+                </div>
+                <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
+                  <span>${l.ward} • ${l.weightKg} kg</span>
+                  <span>${l.timestamp}</span>
+                </div>
               </div>
             </div>
           `;
         }).join('');
       } catch (err) {
-        console.error("Log fetch error:", err);
+        console.error("Logs fetch fail", err);
       }
     }
 
-    async function classifyItem() {
-      const input = document.getElementById('itemInput').value;
-      if (!input) return;
-
-      const res = await fetch('/api/classify', {
+    // 8. Empty Bin Handler
+    async function emptyBin(binType) {
+      if (!confirm(`Confirm collection & sanitization cycle for ${binType} bin?`)) return;
+      await fetch('/api/bins/empty', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: input })
+        body: JSON.stringify({ binType })
       });
-      const data = await res.json();
-      lastClassification = data;
-
-      const resultBox = document.getElementById('aiResult');
-      const resultItem = document.getElementById('resultItem');
-      const resultNote = document.getElementById('resultNote');
-      const binBadge = document.getElementById('binBadge');
-
-      resultItem.innerText = data.item;
-      resultNote.innerText = data.protocolNote;
-
-      binBadge.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 ";
-      if (data.recommendedBin === 'Yellow') binBadge.className += "bg-yellow-400 text-slate-950";
-      else if (data.recommendedBin === 'Red') binBadge.className += "bg-rose-500 text-white";
-      else if (data.recommendedBin === 'White') binBadge.className += "bg-slate-200 text-slate-950";
-      else if (data.recommendedBin === 'Blue') binBadge.className += "bg-blue-500 text-white";
-
-      binBadge.innerText = `${data.recommendedBin} Bin`;
-      resultBox.classList.remove('hidden');
+      fetchTelemetry();
     }
 
-    async function logCurrentDetected() {
-      if (!lastClassification) return;
-      await fetch('/api/log-waste', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          binType: lastClassification.recommendedBin,
-          item: lastClassification.item,
-          weight: (Math.random() * 1.5 + 0.2).toFixed(1)
-        })
-      });
-      document.getElementById('itemInput').value = '';
-      document.getElementById('aiResult').classList.add('hidden');
-      loadTelemetry();
-      loadLogs();
+    // Utility Alert
+    function showAlert(msg, type) {
+      const el = document.getElementById('statusAlert');
+      el.textContent = msg;
+      el.className = "p-3 rounded-xl text-xs font-medium border ";
+
+      if (type === 'success') el.className += "bg-emerald-950/60 border-emerald-800 text-emerald-300";
+      else if (type === 'warning') el.className += "bg-yellow-950/60 border-yellow-800 text-yellow-300";
+      else el.className += "bg-rose-950/60 border-rose-800 text-rose-300";
+
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 5000);
     }
 
-    loadTelemetry();
-    loadLogs();
-    setInterval(loadTelemetry, 5000);
+    init();
   </script>
 </body>
 </html>
-
