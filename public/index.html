@@ -3,472 +3,526 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MEDISORT - Mobile Medical-Waste Segregation</title>
+  <title>MEDISORT • Secure Medical Waste Chain of Custody</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <style>
-    /* Custom scroller for small screen dashboards */
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-  </style>
+  <!-- QR Generation & QR Scanning Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
 
-  <!-- Header -->
-  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-4 py-3 sm:px-6">
+  <!-- ================= AUTH GATE OVERLAY ================= -->
+  <div id="authGate" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="h-12 w-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center mx-auto text-2xl font-black shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 class="text-xl font-extrabold text-white tracking-wide">MEDISORT Access Control</h2>
+        <p class="text-xs text-slate-400">Authenticate role to access medical cart terminal</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Email Address</label>
+          <input id="authEmail" type="email" placeholder="e.g., priya@hospital.org" 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Password</label>
+          <input id="authPassword" type="password" placeholder="••••••••" 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500" />
+        </div>
+
+        <!-- Role Quick Presets for Demo Evaluation -->
+        <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-2">
+          <p class="text-[10px] font-mono uppercase text-slate-400">Quick Test Credentials:</p>
+          <div class="grid grid-cols-3 gap-1.5 text-[10px] font-mono">
+            <button onclick="setCreds('admin@medisort.com', 'Admin@12345')" class="bg-slate-800 hover:bg-slate-700 py-1.5 rounded text-amber-300">Admin</button>
+            <button onclick="setCreds('priya@hospital.org', 'Staff@12345')" class="bg-slate-800 hover:bg-slate-700 py-1.5 rounded text-emerald-300">Staff</button>
+            <button onclick="setCreds('ramesh@greenrecycler.in', 'Recycle@12345')" class="bg-slate-800 hover:bg-slate-700 py-1.5 rounded text-cyan-300">Recycler</button>
+          </div>
+        </div>
+
+        <button onclick="performLogin()" id="btnLogin" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-key"></i> Authenticate Session
+        </button>
+
+        <p id="authError" class="text-xs text-rose-400 text-center hidden"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOP NAVIGATION ================= -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-4 py-3">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-lg shadow-lg shadow-emerald-500/20">
+        <div class="h-9 w-9 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-lg shadow-lg shadow-emerald-500/20">
           <i class="fa-solid fa-hand-holding-medical"></i>
         </div>
         <div>
-          <h1 class="font-extrabold text-lg sm:text-xl tracking-wide bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">MEDISORT</h1>
-          <p class="text-[10px] sm:text-xs text-slate-400 font-mono hidden xs:block">SIH26115 • Smart Segregation Hub</p>
+          <h1 class="font-extrabold text-base sm:text-lg bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">MEDISORT</h1>
+          <p class="text-[10px] text-slate-400 font-mono">Chain of Custody System • SIH26115</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 sm:gap-3 text-xs font-mono">
-        <div class="bg-slate-800/90 border border-slate-700 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
-          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-slate-300 hidden sm:inline">MEDICART-01</span>
+      <!-- Active User Chip -->
+      <div class="flex items-center gap-3">
+        <div class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
+          <span id="userRoleBadge" class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">STAFF</span>
+          <span id="userNameTag" class="text-slate-200 font-medium hidden sm:inline">Priya Sharma</span>
         </div>
-        <div class="bg-slate-800/90 border border-slate-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 text-emerald-400">
-          <i class="fa-solid fa-bolt text-xs"></i> 92%
-        </div>
+        <button onclick="logout()" class="text-xs text-rose-400 hover:text-rose-300 font-mono px-2 py-1 bg-slate-900 rounded-lg border border-slate-800">Logout</button>
       </div>
     </div>
   </header>
 
-  <!-- Container -->
+  <!-- ================= MAIN APP COCKPIT ================= -->
   <main class="max-w-7xl mx-auto w-full p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1">
 
-    <!-- Primary Control Column (Inputs, Camera & Sensors) -->
+    <!-- Left Column: Role-Specific Action Deck (7 Cols) -->
     <div class="lg:col-span-7 space-y-5">
-      
-      <!-- Input Card -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+
+      <!-- PORTAL 1: WARD STAFF / NURSE DEPOSIT TERMINAL -->
+      <div id="staffPortal" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div class="flex items-center gap-2 font-bold text-sm sm:text-base text-white">
+          <h3 class="font-bold text-sm text-white flex items-center gap-2">
             <i class="fa-solid fa-qrcode text-emerald-400"></i>
-            <span>Classified Medical Item Deposit</span>
-          </div>
-          <span class="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">BMW 2016 Compliant</span>
+            <span>Staff Deposit & Handover Generator</span>
+          </h3>
+          <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">WARD 2A</span>
         </div>
 
-        <!-- Strict Item Selection -->
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select Approved Waste Category</label>
-          <select id="catalogSelector" onchange="onItemSelected()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 font-medium">
-            <option value="" disabled selected>-- Select an authorized item from catalog --</option>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Select Biological Waste Item</label>
+          <select id="staffCatalog" onchange="onStaffSelectCatalog()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+            <option value="" disabled selected>-- Select an authorized item --</option>
           </select>
         </div>
 
-        <!-- Live Visual Verification Card -->
-        <div id="catalogPreview" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 flex gap-3 items-center">
-          <img id="catalogImg" src="" alt="Reference Image" class="h-16 w-16 sm:h-20 sm:w-20 rounded-lg object-cover border border-slate-700" />
+        <!-- Item Details Preview -->
+        <div id="itemDetailBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 flex gap-3 items-center">
+          <img id="detailImg" src="" class="h-16 w-16 rounded-lg object-cover border border-slate-700" />
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
-              <h4 id="catalogTitle" class="font-bold text-sm text-white truncate">Item Name</h4>
-              <span id="catalogBinPill" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded">YELLOW</span>
+              <h4 id="detailTitle" class="font-bold text-sm text-white truncate">Item Title</h4>
+              <span id="detailBinBadge" class="text-[9px] font-black uppercase px-2 py-0.5 rounded">RED BIN</span>
             </div>
-            <p id="catalogHazard" class="text-xs text-rose-400 mt-0.5 font-medium"></p>
-            <p id="catalogProtocol" class="text-[11px] text-slate-400 mt-1 font-mono leading-tight"></p>
+            <p id="detailHazard" class="text-xs text-rose-400 font-mono mt-0.5"></p>
+            <p id="detailTreatment" class="text-[11px] text-slate-400 truncate"></p>
           </div>
         </div>
 
-        <!-- Camera Interface (WebRTC) -->
-        <div class="border border-slate-800 rounded-xl p-3 bg-slate-950">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <i class="fa-solid fa-camera text-slate-400"></i> Optical Verification Camera
-            </span>
-            <button type="button" id="cameraToggleBtn" onclick="toggleCamera()" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition">
-              <i class="fa-solid fa-video"></i> Start Camera
-            </button>
-          </div>
-
-          <div class="relative bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center min-h-[160px] sm:min-h-[200px] border border-slate-800">
-            <video id="videoElement" autoplay playsinline class="hidden w-full h-48 sm:h-56 object-cover"></video>
-            <canvas id="canvasElement" class="hidden"></canvas>
-            <img id="capturedSnapshot" class="hidden w-full h-48 sm:h-56 object-cover" />
-            
-            <div id="cameraPlaceholder" class="text-center text-slate-500 p-4">
-              <i class="fa-solid fa-camera-rotate text-2xl mb-1"></i>
-              <p class="text-xs">Camera is offline. Click 'Start Camera' to capture waste proof.</p>
-            </div>
-          </div>
-
-          <div id="cameraControls" class="hidden mt-2 flex gap-2 justify-end">
-            <button type="button" onclick="captureSnapshot()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5">
-              <i class="fa-solid fa-circle-dot"></i> Capture Snapshot
-            </button>
-            <button type="button" onclick="retakeSnapshot()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs">
-              Retake
-            </button>
-          </div>
-        </div>
-
-        <!-- Weight & Ward Inputs -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Digital Scale Input -->
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Load Cell Weight (Kg)</label>
-            <div class="relative">
-              <input type="number" id="weightInput" step="0.01" min="0.01" max="10.0" placeholder="0.00" 
-                     class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 pl-8" />
-              <i class="fa-solid fa-scale-balanced absolute left-3 top-3 text-slate-500 text-xs"></i>
-            </div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Load-Cell Weight (kg)</label>
+            <input type="number" id="depositWeight" step="0.01" min="0.01" max="10" placeholder="0.35" 
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono" />
           </div>
-
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Ward Location</label>
-            <input type="text" id="wardInput" value="Trauma Ward - 2A" 
-                   class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono" />
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Target Ward Location</label>
+            <input type="text" id="depositWard" value="Trauma Ward - 2A" 
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono" />
           </div>
         </div>
 
-        <!-- Submit Deposit Button -->
-        <button onclick="submitDeposit()" id="submitBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl transition duration-150 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 text-sm">
-          <i class="fa-solid fa-lock"></i> Validate & Deposit in Secure Bin
+        <button onclick="submitStaffDeposit()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs font-mono py-3 rounded-xl transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-lock"></i> Seal Deposit & Generate Handshake QR
         </button>
 
-        <div id="statusAlert" class="hidden p-3 rounded-xl text-xs font-medium border"></div>
+        <!-- Display Generated QR For Recycler -->
+        <div id="transferQRCard" class="hidden bg-slate-950 border border-emerald-700/60 rounded-xl p-4 text-center space-y-3">
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-wide font-mono">Present to Authorized Recycler</span>
+          <div id="qrcode" class="p-3 bg-white rounded-xl inline-block shadow-lg"></div>
+          <p id="qrTransferCode" class="text-xs font-mono text-slate-300 font-bold">TRF-XXXXXX</p>
+          <p class="text-[11px] text-slate-400">Recycler must scan this QR with their terminal to release and authenticate custody.</p>
+        </div>
       </div>
+
+      <!-- PORTAL 2: CERTIFIED RECYCLER CAMERA SCANNER -->
+      <div id="recyclerPortal" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="font-bold text-sm text-white flex items-center gap-2">
+            <i class="fa-solid fa-camera text-cyan-400"></i>
+            <span>Recycler Verification Scanner</span>
+          </h3>
+          <span class="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded font-mono">CBWTF LICENSED</span>
+        </div>
+
+        <p class="text-xs text-slate-400">Point your camera at the Staff's Handover QR code or manually enter the Transfer ID to authenticate the batch.</p>
+
+        <!-- QR Scanner Viewport -->
+        <div id="qrReader" class="rounded-xl overflow-hidden border border-slate-800 bg-black min-h-[220px]"></div>
+
+        <div class="flex gap-2">
+          <button onclick="startQRScanner()" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs font-mono py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-expand"></i> Launch QR Scanner
+          </button>
+          <button onclick="stopQRScanner()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 rounded-xl">Stop</button>
+        </div>
+
+        <!-- Manual Code Verification Option -->
+        <div class="pt-3 border-t border-slate-800 flex gap-2">
+          <input id="manualTransferId" type="text" placeholder="Or enter Transfer Code (e.g., TRF-123456)" 
+                 class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white" />
+          <button onclick="submitRecyclerHandshake(document.getElementById('manualTransferId').value)" class="bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs px-4 rounded-xl">Verify</button>
+        </div>
+      </div>
+
+      <!-- PORTAL 3: ZERO-BREACH MASTER ADMIN VAULT -->
+      <div id="adminPortal" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="font-bold text-sm text-white flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-amber-400"></i>
+            <span>Master Admin Security Vault</span>
+          </h3>
+          <span class="text-[10px] bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded font-mono">ZERO-LEAK DIRECTORY</span>
+        </div>
+
+        <p class="text-xs text-slate-400">Only your authenticated email has the master claim to decrypt and inspect the user credential directory.</p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+              <tr>
+                <th class="p-2.5">User ID</th>
+                <th class="p-2.5">Full Name</th>
+                <th class="p-2.5">Encrypted Email</th>
+                <th class="p-2.5">Role</th>
+              </tr>
+            </thead>
+            <tbody id="adminUserTable" class="divide-y divide-slate-800">
+              <!-- Dynamically populated via authenticated token -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Telemetry & Live Manifest Column -->
+    <!-- Right Column: Cart Bins & Immutable Manifest Logs (5 Cols) -->
     <div class="lg:col-span-5 space-y-5">
 
-      <!-- Live Mobile Cart Status Cards -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
-        <h3 class="font-bold text-sm sm:text-base text-white flex items-center justify-between">
-          <span class="flex items-center gap-2">
-            <i class="fa-solid fa-truck-medical text-cyan-400"></i> Smart Bin Status
-          </span>
-          <span class="text-[10px] font-mono text-slate-400">ULTRASONIC IOT</span>
-        </h3>
+      <!-- Telemetry Bins -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+        <h4 class="text-xs font-bold font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+          <span>Mobile Cart Bins Status</span>
+          <span class="text-emerald-400">ONLINE</span>
+        </h4>
 
-        <div class="grid grid-cols-2 gap-3" id="binCardsContainer">
-          <!-- Yellow Bin -->
-          <div class="bg-slate-950 border-l-4 border-yellow-400 p-3 rounded-xl">
-            <div class="flex justify-between items-center text-xs font-bold text-yellow-400">
-              <span>YELLOW</span>
-              <span id="pct-Yellow">0%</span>
-            </div>
-            <p class="text-[10px] text-slate-400 truncate">Infectious Waste</p>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div id="bar-Yellow" class="bg-yellow-400 h-full w-0 transition-all duration-300"></div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
-              <span id="wt-Yellow">0.0 / 15 kg</span>
-              <button onclick="emptyBin('Yellow')" class="text-rose-400 hover:text-rose-300">Empty</button>
-            </div>
-          </div>
-
-          <!-- Red Bin -->
-          <div class="bg-slate-950 border-l-4 border-rose-500 p-3 rounded-xl">
-            <div class="flex justify-between items-center text-xs font-bold text-rose-400">
-              <span>RED</span>
-              <span id="pct-Red">0%</span>
-            </div>
-            <p class="text-[10px] text-slate-400 truncate">Plastics & Tubing</p>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div id="bar-Red" class="bg-rose-500 h-full w-0 transition-all duration-300"></div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
-              <span id="wt-Red">0.0 / 15 kg</span>
-              <button onclick="emptyBin('Red')" class="text-rose-400 hover:text-rose-300">Empty</button>
-            </div>
-          </div>
-
-          <!-- White Bin -->
-          <div class="bg-slate-950 border-l-4 border-slate-200 p-3 rounded-xl">
-            <div class="flex justify-between items-center text-xs font-bold text-slate-200">
-              <span>WHITE</span>
-              <span id="pct-White">0%</span>
-            </div>
-            <p class="text-[10px] text-slate-400 truncate">Needles / Sharps</p>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div id="bar-White" class="bg-slate-200 h-full w-0 transition-all duration-300"></div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
-              <span id="wt-White">0.0 / 10 kg</span>
-              <button onclick="emptyBin('White')" class="text-rose-400 hover:text-rose-300">Empty</button>
-            </div>
-          </div>
-
-          <!-- Blue Bin -->
-          <div class="bg-slate-950 border-l-4 border-blue-500 p-3 rounded-xl">
-            <div class="flex justify-between items-center text-xs font-bold text-blue-400">
-              <span>BLUE</span>
-              <span id="pct-Blue">0%</span>
-            </div>
-            <p class="text-[10px] text-slate-400 truncate">Glass & Vials</p>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div id="bar-Blue" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
-              <span id="wt-Blue">0.0 / 12 kg</span>
-              <button onclick="emptyBin('Blue')" class="text-rose-400 hover:text-rose-300">Empty</button>
-            </div>
-          </div>
+        <div class="grid grid-cols-2 gap-3" id="binsTelemetry">
+          <!-- Bins rendered here -->
         </div>
       </div>
 
-      <!-- Real-Time Audit Manifest (With Image Proof) -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col min-h-[350px]">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
-            <i class="fa-solid fa-receipt text-emerald-400"></i> Verified Waste Manifest
-          </h3>
-          <span class="text-[10px] font-mono bg-slate-800 px-2 py-0.5 rounded text-slate-400">Secure Logs</span>
-        </div>
+      <!-- Verified Manifest Trail -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+        <h4 class="text-xs font-bold font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+          <span>Chain of Custody Manifests</span>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">Tamper-Evident</span>
+        </h4>
 
-        <div id="logsList" class="space-y-2.5 overflow-y-auto max-h-[380px] pr-1 flex-1">
-          <!-- Logs will populate here -->
+        <div id="manifestList" class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
+          <!-- Live manifests injected here -->
         </div>
       </div>
+
     </div>
+
   </main>
 
-  <script>
-    let catalog = [];
-    let mediaStream = null;
-    let currentSnapshotBase64 = null;
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden px-4 py-3 rounded-xl border text-xs font-mono shadow-2xl"></div>
 
-    // 1. Initialize App Data
+  <script>
+    let authToken = localStorage.getItem('medisort_token') || null;
+    let currentUser = JSON.parse(localStorage.getItem('medisort_user') || 'null');
+    let catalog = [];
+    let html5QrScanner = null;
+
     async function init() {
+      if (!authToken || !currentUser) {
+        document.getElementById('authGate').classList.remove('hidden');
+      } else {
+        document.getElementById('authGate').classList.add('hidden');
+        setupUserInterface();
+      }
       await fetchCatalog();
       await fetchTelemetry();
-      await fetchLogs();
+      if (authToken) await fetchManifests();
       setInterval(fetchTelemetry, 6000);
     }
 
-    // 2. Fetch Strictly Defined BMW Catalog
-    async function fetchCatalog() {
-      try {
-        const res = await fetch('/api/catalog');
-        catalog = await res.json();
-        const selector = document.getElementById('catalogSelector');
-        selector.innerHTML = '<option value="" disabled selected>-- Select an authorized item from catalog --</option>';
-        catalog.forEach(item => {
-          const opt = document.createElement('option');
-          opt.value = item.id;
-          opt.textContent = `[${item.bin.toUpperCase()}] ${item.name}`;
-          selector.appendChild(opt);
-        });
-      } catch (err) {
-        showAlert("Failed to load official catalog.", "danger");
-      }
+    function setCreds(e, p) {
+      document.getElementById('authEmail').value = e;
+      document.getElementById('authPassword').value = p;
     }
 
-    // 3. User Selects an Item from Catalog
-    function onItemSelected() {
-      const id = document.getElementById('catalogSelector').value;
-      const item = catalog.find(x => x.id === id);
-      if (!item) return;
-
-      document.getElementById('catalogPreview').classList.remove('hidden');
-      document.getElementById('catalogImg').src = item.refImage;
-      document.getElementById('catalogTitle').textContent = item.name;
-      document.getElementById('catalogHazard').textContent = `Hazard: ${item.hazard}`;
-      document.getElementById('catalogProtocol').textContent = `Action: ${item.treatment}`;
-
-      const pill = document.getElementById('catalogBinPill');
-      pill.textContent = `${item.bin} BIN`;
-      pill.className = "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ";
-
-      if (item.bin === 'Yellow') pill.classList.add('bg-yellow-400', 'text-slate-950');
-      else if (item.bin === 'Red') pill.classList.add('bg-rose-500', 'text-white');
-      else if (item.bin === 'White') pill.classList.add('bg-slate-200', 'text-slate-950');
-      else if (item.bin === 'Blue') pill.classList.add('bg-blue-500', 'text-white');
-    }
-
-    // 4. Camera Controls (WebRTC)
-    async function toggleCamera() {
-      const video = document.getElementById('videoElement');
-      const placeholder = document.getElementById('cameraPlaceholder');
-      const controls = document.getElementById('cameraControls');
-      const toggleBtn = document.getElementById('cameraToggleBtn');
-
-      if (mediaStream) {
-        // Stop camera
-        mediaStream.getTracks().forEach(t => t.stop());
-        mediaStream = null;
-        video.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        controls.classList.add('hidden');
-        toggleBtn.innerHTML = '<i class="fa-solid fa-video"></i> Start Camera';
-      } else {
-        try {
-          mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
-          });
-          video.srcObject = mediaStream;
-          video.classList.remove('hidden');
-          placeholder.classList.add('hidden');
-          controls.classList.remove('hidden');
-          document.getElementById('capturedSnapshot').classList.add('hidden');
-          toggleBtn.innerHTML = '<i class="fa-solid fa-video-slash"></i> Stop Camera';
-        } catch (err) {
-          showAlert("Camera access denied or device has no camera.", "danger");
-        }
-      }
-    }
-
-    function captureSnapshot() {
-      const video = document.getElementById('videoElement');
-      const canvas = document.getElementById('canvasElement');
-      const capturedImg = document.getElementById('capturedSnapshot');
-
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      currentSnapshotBase64 = canvas.toDataURL('image/jpeg', 0.7);
-      capturedImg.src = currentSnapshotBase64;
-      capturedImg.classList.remove('hidden');
-      video.classList.add('hidden');
-    }
-
-    function retakeSnapshot() {
-      currentSnapshotBase64 = null;
-      document.getElementById('capturedSnapshot').classList.add('hidden');
-      document.getElementById('videoElement').classList.remove('hidden');
-    }
-
-    // 5. Submit Deposit Transaction
-    async function submitDeposit() {
-      const catalogId = document.getElementById('catalogSelector').value;
-      const weight = parseFloat(document.getElementById('weightInput').value);
-      const ward = document.getElementById('wardInput').value.trim();
-
-      if (!catalogId) {
-        return showAlert("Please select a standard item from the catalog.", "warning");
-      }
-      if (isNaN(weight) || weight <= 0) {
-        return showAlert("Please specify a valid, measured weight (> 0 kg).", "warning");
-      }
+    async function performLogin() {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const errEl = document.getElementById('authError');
+      errEl.classList.add('hidden');
 
       try {
-        const payload = {
-          catalogId,
-          weight,
-          ward,
-          snapshot: currentSnapshotBase64
-        };
-
-        const res = await fetch('/api/deposit', {
+        const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ email, password })
         });
-
         const data = await res.json();
-
         if (!res.ok) {
-          return showAlert(data.error || "Failed to log deposit.", "danger");
-        }
-
-        showAlert(data.message, "success");
-        
-        // Reset Inputs
-        document.getElementById('weightInput').value = '';
-        if (currentSnapshotBase64) retakeSnapshot();
-        
-        // Refresh UI
-        fetchTelemetry();
-        fetchLogs();
-      } catch (err) {
-        showAlert("Network communication error.", "danger");
-      }
-    }
-
-    // 6. Fetch Telemetry
-    async function fetchTelemetry() {
-      try {
-        const res = await fetch('/api/cart');
-        const cart = await res.json();
-
-        for (const [key, b] of Object.entries(cart.bins)) {
-          const bar = document.getElementById(`bar-${key}`);
-          const pct = document.getElementById(`pct-${key}`);
-          const wt = document.getElementById(`wt-${key}`);
-
-          if (bar) bar.style.width = `${b.level}%`;
-          if (pct) pct.textContent = `${b.level}%`;
-          if (wt) wt.textContent = `${b.currentKg.toFixed(1)} / ${b.maxKg} kg`;
-        }
-      } catch (err) {
-        console.error("Telemetry fetch fail", err);
-      }
-    }
-
-    // 7. Fetch Logs
-    async function fetchLogs() {
-      try {
-        const res = await fetch('/api/logs');
-        const logs = await res.json();
-        const container = document.getElementById('logsList');
-
-        if (logs.length === 0) {
-          container.innerHTML = '<div class="text-xs text-slate-500 text-center py-8 font-mono">No deposits registered during this cycle.</div>';
+          errEl.textContent = data.error;
+          errEl.classList.remove('hidden');
           return;
         }
 
-        container.innerHTML = logs.map(l => {
-          let badge = 'bg-yellow-400 text-slate-950';
-          if (l.bin === 'Red') badge = 'bg-rose-500 text-white';
-          if (l.bin === 'White') badge = 'bg-slate-200 text-slate-950';
-          if (l.bin === 'Blue') badge = 'bg-blue-500 text-white';
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('medisort_token', authToken);
+        localStorage.setItem('medisort_user', JSON.stringify(currentUser));
 
+        document.getElementById('authGate').classList.add('hidden');
+        setupUserInterface();
+        fetchManifests();
+      } catch (e) {
+        errEl.textContent = 'Server connection error.';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('medisort_token');
+      localStorage.removeItem('medisort_user');
+      location.reload();
+    }
+
+    function setupUserInterface() {
+      document.getElementById('userNameTag').textContent = currentUser.name;
+      const badge = document.getElementById('userRoleBadge');
+      badge.textContent = currentUser.role;
+
+      // Reset Portals
+      document.getElementById('staffPortal').classList.add('hidden');
+      document.getElementById('recyclerPortal').classList.add('hidden');
+      document.getElementById('adminPortal').classList.add('hidden');
+
+      if (currentUser.role === 'STAFF') {
+        document.getElementById('staffPortal').classList.remove('hidden');
+      } else if (currentUser.role === 'RECYCLER') {
+        document.getElementById('recyclerPortal').classList.remove('hidden');
+      } else if (currentUser.role === 'ADMIN') {
+        document.getElementById('staffPortal').classList.remove('hidden');
+        document.getElementById('recyclerPortal').classList.remove('hidden');
+        document.getElementById('adminPortal').classList.remove('hidden');
+        fetchAdminUsers();
+      }
+    }
+
+    async function fetchCatalog() {
+      const res = await fetch('/api/catalog');
+      catalog = await res.json();
+      const sel = document.getElementById('staffCatalog');
+      sel.innerHTML = '<option value="" disabled selected>-- Select an authorized item --</option>';
+      catalog.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = `[${item.bin}] ${item.name}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function onStaffSelectCatalog() {
+      const id = document.getElementById('staffCatalog').value;
+      const item = catalog.find(c => c.id === id);
+      if (!item) return;
+
+      document.getElementById('itemDetailBox').classList.remove('hidden');
+      document.getElementById('detailImg').src = item.img;
+      document.getElementById('detailTitle').textContent = item.name;
+      document.getElementById('detailHazard').textContent = `Risk: ${item.hazard}`;
+      document.getElementById('detailTreatment').textContent = `Protocol: ${item.treatment}`;
+      document.getElementById('depositWeight').value = item.defWt;
+
+      const badge = document.getElementById('detailBinBadge');
+      badge.textContent = `${item.bin.toUpperCase()} BIN`;
+      badge.className = "text-[9px] font-black uppercase px-2 py-0.5 rounded ";
+      if (item.bin === 'Yellow') badge.classList.add('bg-yellow-400', 'text-slate-950');
+      else if (item.bin === 'Red') badge.classList.add('bg-rose-500', 'text-white');
+      else if (item.bin === 'White') badge.classList.add('bg-slate-200', 'text-slate-950');
+      else if (item.bin === 'Blue') badge.classList.add('bg-blue-500', 'text-white');
+    }
+
+    async function submitStaffDeposit() {
+      const catalogId = document.getElementById('staffCatalog').value;
+      const weight = parseFloat(document.getElementById('depositWeight').value);
+      const ward = document.getElementById('depositWard').value;
+
+      if (!catalogId) return showToast('Please select a catalog item.', 'danger');
+
+      const res = await fetch('/api/deposit/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ catalogId, weight, ward })
+      });
+
+      const data = await res.json();
+      if (!res.ok) return showToast(data.error, 'danger');
+
+      showToast(`Deposit sealed. Batch ${data.transferId} generated!`, 'success');
+
+      // Generate Handshake QR
+      document.getElementById('transferQRCard').classList.remove('hidden');
+      document.getElementById('qrTransferCode').textContent = data.transferId;
+      document.getElementById('qrcode').innerHTML = '';
+      new QRCode(document.getElementById('qrcode'), {
+        text: data.transferId,
+        width: 140,
+        height: 140
+      });
+
+      fetchTelemetry();
+      fetchManifests();
+    }
+
+    // QR Scanning for Recycler
+    function startQRScanner() {
+      html5QrScanner = new Html5Qrcode("qrReader");
+      html5QrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 200, height: 200 } },
+        (decodedText) => {
+          stopQRScanner();
+          submitRecyclerHandshake(decodedText);
+        },
+        () => {}
+      ).catch(() => showToast('Camera permission denied or camera not found.', 'danger'));
+    }
+
+    function stopQRScanner() {
+      if (html5QrScanner) {
+        html5QrScanner.stop().then(() => html5QrScanner.clear()).catch(() => {});
+      }
+    }
+
+    async function submitRecyclerHandshake(transferId) {
+      if (!transferId) return showToast('No Transfer Code provided.', 'danger');
+
+      const res = await fetch('/api/handover/scan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ transferId })
+      });
+
+      const data = await res.json();
+      if (!res.ok) return showToast(data.error, 'danger');
+
+      showToast(data.message, 'success');
+      fetchManifests();
+    }
+
+    // Admin-Only Fetch
+    async function fetchAdminUsers() {
+      try {
+        const res = await fetch('/api/admin/users', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const users = await res.json();
+        const tbody = document.getElementById('adminUserTable');
+        tbody.innerHTML = users.map(u => `
+          <tr class="hover:bg-slate-950">
+            <td class="p-2.5 text-slate-400">${u.id}</td>
+            <td class="p-2.5 text-white font-bold">${u.name}</td>
+            <td class="p-2.5 text-emerald-400">${u.email}</td>
+            <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300">${u.role}</span></td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error("Admin user directory fetch failed", e);
+      }
+    }
+
+    async function fetchTelemetry() {
+      const res = await fetch('/api/telemetry');
+      const cart = await res.json();
+      const container = document.getElementById('binsTelemetry');
+      container.innerHTML = Object.entries(cart.bins).map(([binName, b]) => {
+        let border = 'border-yellow-400 text-yellow-400';
+        let bar = 'bg-yellow-400';
+        if (binName === 'Red') { border = 'border-rose-500 text-rose-400'; bar = 'bg-rose-500'; }
+        if (binName === 'White') { border = 'border-slate-200 text-slate-200'; bar = 'bg-slate-200'; }
+        if (binName === 'Blue') { border = 'border-blue-500 text-blue-400'; bar = 'bg-blue-500'; }
+
+        return `
+          <div class="bg-slate-950 border-l-4 ${border} p-3 rounded-xl">
+            <div class="flex justify-between items-center text-xs font-bold">
+              <span>${binName.toUpperCase()}</span>
+              <span class="font-mono">${b.level}%</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div class="${bar} h-full" style="width: ${b.level}%"></div>
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono mt-1">${b.currentKg} / ${b.maxKg} kg</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function fetchManifests() {
+      try {
+        const res = await fetch('/api/manifests', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const manifests = await res.json();
+        const list = document.getElementById('manifestList');
+
+        if (manifests.length === 0) {
+          list.innerHTML = '<div class="text-xs text-slate-500 text-center py-8 font-mono">No manifests logged in duty cycle.</div>';
+          return;
+        }
+
+        list.innerHTML = manifests.map(m => {
+          const isCollected = m.status === 'COLLECTED_BY_RECYCLER';
           return `
-            <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-xl flex items-center gap-3">
-              <img src="${l.snapshot}" class="h-12 w-12 rounded-lg object-cover border border-slate-800 bg-slate-900 flex-shrink-0" />
+            <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center gap-3">
+              <img src="${m.snapshot}" class="h-12 w-12 rounded-lg object-cover border border-slate-800 bg-slate-900" />
               <div class="flex-1 min-w-0">
                 <div class="flex justify-between items-start">
-                  <p class="text-xs font-bold text-white truncate">${l.itemName}</p>
-                  <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${badge}">${l.bin}</span>
+                  <h5 class="text-xs font-bold text-white truncate">${m.item}</h5>
+                  <span class="text-[9px] font-mono px-2 py-0.5 rounded ${isCollected ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">
+                    ${isCollected ? 'COLLECTED' : 'PENDING'}
+                  </span>
                 </div>
-                <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-mono">
-                  <span>${l.ward} • ${l.weightKg} kg</span>
-                  <span>${l.timestamp}</span>
+                <div class="text-[10px] text-slate-400 font-mono mt-0.5">
+                  ${m.weightKg} kg • ${m.bin} Bin • By ${m.depositedByStaff}
                 </div>
+                ${isCollected ? `<div class="text-[10px] text-emerald-400 font-mono mt-0.5">Signed by Recycler: ${m.acceptedByRecycler} (${m.recyclerLicense})</div>` : ''}
               </div>
             </div>
           `;
         }).join('');
-      } catch (err) {
-        console.error("Logs fetch fail", err);
-      }
+      } catch (e) {}
     }
 
-    // 8. Empty Bin Handler
-    async function emptyBin(binType) {
-      if (!confirm(`Confirm collection & sanitization cycle for ${binType} bin?`)) return;
-      await fetch('/api/bins/empty', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ binType })
-      });
-      fetchTelemetry();
-    }
-
-    // Utility Alert
-    function showAlert(msg, type) {
-      const el = document.getElementById('statusAlert');
-      el.textContent = msg;
-      el.className = "p-3 rounded-xl text-xs font-medium border ";
-
-      if (type === 'success') el.className += "bg-emerald-950/60 border-emerald-800 text-emerald-300";
-      else if (type === 'warning') el.className += "bg-yellow-950/60 border-yellow-800 text-yellow-300";
-      else el.className += "bg-rose-950/60 border-rose-800 text-rose-300";
-
-      el.classList.remove('hidden');
-      setTimeout(() => el.classList.add('hidden'), 5000);
+    function showToast(msg, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `fixed bottom-4 right-4 z-50 px-4 py-3 rounded-xl border text-xs font-mono shadow-2xl ${type === 'success' ? 'bg-emerald-950 border-emerald-700 text-emerald-300' : 'bg-rose-950 border-rose-700 text-rose-300'}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4500);
     }
 
     init();
   </script>
 </body>
 </html>
+
+
