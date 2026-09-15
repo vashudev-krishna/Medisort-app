@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEDISORT - Smart Mobile Medical Waste System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+  <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-50 backdrop-blur px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-emerald-500 text-slate-950 p-2.5 rounded-xl font-black text-xl flex items-center justify-center">
+        <i class="fa-solid fa-recycle"></i>
+      </div>
+      <div>
+        <h1 class="font-black text-2xl tracking-wide bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">MEDISORT</h1>
+        <p class="text-xs text-slate-400">SIH26115 • Smart Mobile Medical-Waste Segregation</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4 text-xs font-mono">
+      <span class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span> Cart MEDICART-01 Online
+      </span>
+      <span class="bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+        <i class="fa-solid fa-battery-three-quarters text-emerald-400"></i> 84%
+      </span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <section class="lg:col-span-2 space-y-6">
+      <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl backdrop-blur">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold flex items-center gap-2 text-white">
+            <i class="fa-solid fa-microchip text-emerald-400"></i> AI Auto-Segregation Assistant
+          </h2>
+          <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">BMW Rules 2016 Compliant</span>
+        </div>
+
+        <p class="text-sm text-slate-300 mb-4">Type the waste item to get designated color bin & handling instructions.</p>
+
+        <div class="flex gap-2">
+          <input id="itemInput" type="text" placeholder="e.g., Used Syringes, Cotton gauze with blood, IV tubing, Glass vial..." 
+                 class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-emerald-400 text-white placeholder-slate-500" />
+          <button onclick="classifyItem()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 rounded-xl transition flex items-center gap-2 text-sm">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Classify
+          </button>
+        </div>
+
+        <div id="aiResult" class="hidden mt-5 p-4 rounded-xl border border-slate-700 bg-slate-950/60 transition">
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-xs uppercase text-slate-400 tracking-wider">Detected Item</span>
+              <h3 id="resultItem" class="font-bold text-lg text-white">Needle</h3>
+              <p id="resultNote" class="text-xs text-slate-300 mt-1 font-mono"></p>
+            </div>
+            <div id="binBadge" class="px-4 py-2 rounded-xl font-black text-sm uppercase tracking-wider text-slate-950 flex items-center gap-2">
+              <span>White Bin</span>
+            </div>
+          </div>
+          <button onclick="logCurrentDetected()" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-2 rounded-lg text-xs font-semibold">
+            Confirm & Log Deposit into Bin
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
+        <h2 class="text-lg font-bold flex items-center gap-2 text-white mb-4">
+          <i class="fa-solid fa-weight-scale text-cyan-400"></i> Mobile Cart Bins (Ultrasonic Level Status)
+        </h2>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-slate-900/90 border-t-4 border-yellow-400 p-4 rounded-xl">
+            <span class="text-xs font-bold text-yellow-400 uppercase">Yellow Bin</span>
+            <p class="text-[11px] text-slate-400">Infectious / Soiled</p>
+            <div class="mt-3">
+              <span id="lvl-yellow-text" class="text-xl font-bold">45%</span>
+              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
+                <div id="lvl-yellow-bar" class="bg-yellow-400 h-full" style="width: 45%"></div>
+              </div>
+              <p id="wt-yellow" class="text-[10px] text-slate-400 mt-1">6.8 / 15 kg</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border-t-4 border-rose-500 p-4 rounded-xl">
+            <span class="text-xs font-bold text-rose-500 uppercase">Red Bin</span>
+            <p class="text-[11px] text-slate-400">Plastics / Tubing</p>
+            <div class="mt-3">
+              <span id="lvl-red-text" class="text-xl font-bold">68%</span>
+              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
+                <div id="lvl-red-bar" class="bg-rose-500 h-full" style="width: 68%"></div>
+              </div>
+              <p id="wt-red" class="text-[10px] text-slate-400 mt-1">10.2 / 15 kg</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border-t-4 border-slate-200 p-4 rounded-xl">
+            <span class="text-xs font-bold text-slate-200 uppercase">White Bin</span>
+            <p class="text-[11px] text-slate-400">Sharps / Needles</p>
+            <div class="mt-3">
+              <span id="lvl-white-text" class="text-xl font-bold">25%</span>
+              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
+                <div id="lvl-white-bar" class="bg-slate-200 h-full" style="width: 25%"></div>
+              </div>
+              <p id="wt-white" class="text-[10px] text-slate-400 mt-1">2.5 / 10 kg</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border-t-4 border-blue-500 p-4 rounded-xl">
+            <span class="text-xs font-bold text-blue-400 uppercase">Blue Bin</span>
+            <p class="text-[11px] text-slate-400">Glass / Ampoules</p>
+            <div class="mt-3">
+              <span id="lvl-blue-text" class="text-xl font-bold">30%</span>
+              <div class="w-full bg-slate-700 h-2 rounded-full mt-1 overflow-hidden">
+                <div id="lvl-blue-bar" class="bg-blue-500 h-full" style="width: 30%"></div>
+              </div>
+              <p id="wt-blue" class="text-[10px] text-slate-400 mt-1">3.6 / 12 kg</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold flex items-center gap-2 text-white">
+          <i class="fa-solid fa-list-check text-emerald-400"></i> Collection Logs
+        </h2>
+        <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Live Manifest</span>
+      </div>
+
+      <div id="logContainer" class="space-y-3 flex-1 overflow-y-auto max-h-[500px] pr-1"></div>
+    </section>
+  </main>
+
+  <script>
+    let lastClassification = null;
+
+    async function loadTelemetry() {
+      try {
+        const res = await fetch('/api/cart');
+        const data = await res.json();
+        for (const [key, bin] of Object.entries(data.bins)) {
+          const bar = document.getElementById(`lvl-${key}-bar`);
+          const text = document.getElementById(`lvl-${key}-text`);
+          const wt = document.getElementById(`wt-${key}`);
+          if (bar && text && wt) {
+            bar.style.width = `${bin.level}%`;
+            text.innerText = `${bin.level}%`;
+            wt.innerText = `${bin.currentKg} / ${bin.maxKg} kg`;
+          }
+        }
+      } catch (err) {
+        console.error("Telemetry error:", err);
+      }
+    }
+
+    async function loadLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        const logs = await res.json();
+        const container = document.getElementById('logContainer');
+        container.innerHTML = logs.map(l => {
+          let badgeColor = 'bg-yellow-400 text-slate-950';
+          if (l.binType === 'Red') badgeColor = 'bg-rose-500 text-white';
+          if (l.binType === 'White') badgeColor = 'bg-slate-200 text-slate-950';
+          if (l.binType === 'Blue') badgeColor = 'bg-blue-500 text-white';
+
+          return `
+            <div class="p-3 bg-slate-950/70 border border-slate-700/60 rounded-xl flex items-center justify-between text-xs">
+              <div>
+                <p class="font-bold text-white text-sm">${l.item}</p>
+                <p class="text-slate-400">${l.ward} • ${l.weight} kg</p>
+              </div>
+              <div class="text-right">
+                <span class="font-bold px-2 py-0.5 rounded text-[11px] ${badgeColor}">${l.binType}</span>
+                <p class="text-[10px] text-slate-500 mt-1 font-mono">${l.timestamp}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error("Log fetch error:", err);
+      }
+    }
+
+    async function classifyItem() {
+      const input = document.getElementById('itemInput').value;
+      if (!input) return;
+
+      const res = await fetch('/api/classify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: input })
+      });
+      const data = await res.json();
+      lastClassification = data;
+
+      const resultBox = document.getElementById('aiResult');
+      const resultItem = document.getElementById('resultItem');
+      const resultNote = document.getElementById('resultNote');
+      const binBadge = document.getElementById('binBadge');
+
+      resultItem.innerText = data.item;
+      resultNote.innerText = data.protocolNote;
+
+      binBadge.className = "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 ";
+      if (data.recommendedBin === 'Yellow') binBadge.className += "bg-yellow-400 text-slate-950";
+      else if (data.recommendedBin === 'Red') binBadge.className += "bg-rose-500 text-white";
+      else if (data.recommendedBin === 'White') binBadge.className += "bg-slate-200 text-slate-950";
+      else if (data.recommendedBin === 'Blue') binBadge.className += "bg-blue-500 text-white";
+
+      binBadge.innerText = `${data.recommendedBin} Bin`;
+      resultBox.classList.remove('hidden');
+    }
+
+    async function logCurrentDetected() {
+      if (!lastClassification) return;
+      await fetch('/api/log-waste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          binType: lastClassification.recommendedBin,
+          item: lastClassification.item,
+          weight: (Math.random() * 1.5 + 0.2).toFixed(1)
+        })
+      });
+      document.getElementById('itemInput').value = '';
+      document.getElementById('aiResult').classList.add('hidden');
+      loadTelemetry();
+      loadLogs();
+    }
+
+    loadTelemetry();
+    loadLogs();
+    setInterval(loadTelemetry, 5000);
+  </script>
+</body>
+</html>
+
